@@ -1,707 +1,694 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#B71C1C">
-  <title>🀄 麻雀成績帳</title>
-  <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    :root{
-      --red:#C62828;--red-d:#8E0000;--red-l:#FFEBEE;
-      --blue:#1565C0;--blue-l:#E3F2FD;
-      --amber:#E65100;--amber-l:#FFF3E0;
-      --green:#2E7D32;--green-l:#E8F5E9;
-      --bg:#F4F4F4;--surface:#FFFFFF;
-      --text:#1A1A1A;--text2:#757575;--border:#E0E0E0;
-      --nav:64px;--top:52px;--r:12px;
-    }
-    html,body{height:100%;font-family:-apple-system,'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;}
-    #app{max-width:540px;margin:0 auto;min-height:100%;background:var(--bg);position:relative;}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<title>🀄 麻雀スコア</title>
+<style>
+:root {
+  --green:      #1b5e20;
+  --green-mid:  #2e7d32;
+  --green-light:#43a047;
+  --green-pale: #e8f5e9;
+  --green-bg:   #f1f8e9;
+  --red:        #c62828;
+  --red-pale:   #ffebee;
+  --gold:       #f9a825;
+  --silver:     #90a4ae;
+  --bronze:     #a1887f;
+  --bg:         #f4f6f4;
+  --card:       #ffffff;
+  --text:       #1a2e1a;
+  --sub:        #6a7a6a;
+  --border:     #dde8dd;
+  --safe-bot:   env(safe-area-inset-bottom, 0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);max-width:480px;margin:0 auto;min-height:100vh;position:relative}
 
-    /* TOPBAR */
-    .top{position:sticky;top:0;z-index:100;background:var(--red);color:#fff;height:var(--top);display:flex;align-items:center;padding:0 16px;gap:10px;box-shadow:0 2px 6px rgba(0,0,0,.25);}
-    .top-title{font-size:17px;font-weight:700;flex:1;}
-    .top-btn{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:6px;border-radius:8px;line-height:1;}
-    .top-btn:active{background:rgba(255,255,255,.2);}
+/* ── Header ── */
+.hdr{background:var(--green);color:#fff;padding:14px 16px 12px;position:sticky;top:0;z-index:60;display:flex;align-items:center;justify-content:space-between}
+.hdr-title{font-size:18px;font-weight:700;letter-spacing:.5px}
+.hdr-sub{font-size:11px;opacity:.75;margin-top:2px}
+.hdr-actions{display:flex;gap:8px}
+.hdr-btn{background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;font-weight:600}
 
-    /* BOTTOM NAV */
-    .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:540px;height:var(--nav);background:#fff;border-top:1px solid var(--border);display:flex;z-index:100;box-shadow:0 -2px 6px rgba(0,0,0,.08);}
-    .nv{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:none;background:none;cursor:pointer;color:var(--text2);font-size:11px;padding-bottom:env(safe-area-inset-bottom,0);-webkit-tap-highlight-color:transparent;transition:color .15s;}
-    .nv.on{color:var(--red);}
-    .nv svg{width:22px;height:22px;}
+/* ── Bottom Nav ── */
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid var(--border);display:flex;z-index:60;padding-bottom:var(--safe-bot)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0 6px;cursor:pointer;color:var(--sub);background:none;border:none;font-size:10px;font-weight:500;transition:color .15s}
+.nav-btn svg{width:22px;height:22px;margin-bottom:3px}
+.nav-btn.active{color:var(--green-mid)}
 
-    /* MAIN */
-    .main{padding:14px;padding-bottom:calc(var(--nav) + 16px);}
-    .page{display:none;}.page.on{display:block;}
+/* ── Pages ── */
+.page{display:none;padding:12px 12px 80px}
+.page.active{display:block}
 
-    /* CARD */
-    .card{background:var(--surface);border-radius:var(--r);padding:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);}
-    .card-t{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;}
+/* ── Section label ── */
+.sec{font-size:11px;font-weight:700;color:var(--sub);letter-spacing:.8px;text-transform:uppercase;margin:16px 0 8px 4px}
+.sec:first-child{margin-top:4px}
 
-    /* LEADER */
-    .li{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);gap:10px;}
-    .li:last-child{border-bottom:none;}
-    .li-rank{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;background:var(--bg);color:var(--text2);}
-    .r1{background:#FFD700;color:#333;}.r2{background:#C0C0C0;color:#333;}.r3{background:#CD7F32;color:#fff;}
-    .li-name{flex:1;font-size:15px;font-weight:700;}
-    .li-sub{font-size:11px;color:var(--text2);margin-top:1px;}
-    .li-score{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;}
-    .pos{color:var(--green);}.neg{color:var(--red);}
+/* ── Card ── */
+.card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.07)}
 
-    /* STAT BAR */
-    .bar-row{margin-bottom:9px;}
-    .bar-hd{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;}
-    .bar-bg{height:8px;background:var(--bg);border-radius:4px;overflow:hidden;}
-    .bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
-    .bt{background:var(--blue);}.ba{background:var(--amber);}.br{background:var(--red);}
+/* ── Ranking ── */
+.rank-row{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.rank-row:last-child{border-bottom:none}
+.rank-badge{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;margin-right:12px}
+.rb1{background:var(--gold);color:#5d4037}
+.rb2{background:var(--silver);color:#37474f}
+.rb3{background:var(--bronze);color:#fff}
+.rb-{background:#eceff1;color:#90a4ae}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-size:16px;font-weight:700}
+.rank-detail{font-size:11px;color:var(--sub);margin-top:2px}
+.rank-score{font-size:22px;font-weight:800;white-space:nowrap;padding-left:8px}
+.pos{color:var(--green-mid)}.neg{color:var(--red)}.zer{color:var(--sub)}
 
-    /* MINI STAT */
-    .msg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;}
-    .ms{background:var(--bg);border-radius:8px;padding:9px;text-align:center;}
-    .ms-v{font-size:20px;font-weight:800;}
-    .ms-l{font-size:10px;color:var(--text2);margin-top:2px;}
+/* ── Sparkline ── */
+.spark{height:36px;display:flex;align-items:center;margin-top:6px;gap:2px}
+.spark-bar{flex:1;border-radius:3px 3px 0 0;min-height:3px;max-height:36px}
 
-    /* HISTORY */
-    .si{background:var(--surface);border-radius:var(--r);margin-bottom:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);}
-    .si-hd{display:flex;align-items:center;padding:12px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;}
-    .si-date{font-size:14px;font-weight:700;flex:1;}
-    .si-meta{font-size:11px;color:var(--text2);margin-right:8px;}
-    .si-ch{color:var(--text2);font-size:18px;transition:transform .2s;line-height:1;}
-    .si-ch.open{transform:rotate(90deg);}
-    .si-bd{display:none;padding:0 14px 12px;}
-    .si-bd.open{display:block;}
-    .si-row{display:flex;align-items:center;padding:6px 0;border-top:1px solid var(--border);font-size:13px;gap:6px;}
-    .si-nm{width:55px;font-weight:700;}
-    .si-sc{width:65px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;}
-    .si-dt{flex:1;font-size:11px;color:var(--text2);text-align:right;}
-    .del-btn{border:none;background:var(--red-l);color:var(--red);font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;margin-top:8px;width:100%;}
+/* ── Game Card ── */
+.g-card{background:var(--card);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.g-head{padding:9px 14px;background:var(--green-pale);display:flex;justify-content:space-between;align-items:center}
+.g-date{font-size:13px;font-weight:700;color:var(--green)}
+.g-memo{font-size:11px;color:var(--sub);max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.g-players{display:grid;gap:1px;background:var(--border)}
+.g-player{background:var(--card);padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.g-pname{font-size:14px;font-weight:600}
+.g-rank-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:6px}
+.br1{background:#fff8e1;color:#f57f17}.br2{background:#f5f5f5;color:#616161}
+.br3{background:#fbe9e7;color:#bf360c}.br4{background:#ede7f6;color:#4527a0}
+.g-pscore{font-size:17px;font-weight:800}
+.g-del{background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;padding:0 4px;line-height:1}
+.g-del:active{color:var(--red)}
 
-    /* FORM */
-    .fg{margin-bottom:14px;}
-    .fl{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:5px;}
-    .fi{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;background:#fff;color:var(--text);-webkit-appearance:none;transition:border-color .15s;}
-    .fi:focus{outline:none;border-color:var(--red);}
-    .pe{background:var(--bg);border-radius:10px;padding:12px;margin-bottom:10px;}
-    .pe-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-    .pe-nm{font-size:16px;font-weight:700;}
-    .pe-rm{background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0;line-height:1;}
-    .eg{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;}
-    .ef{display:flex;flex-direction:column;gap:3px;}
-    .ef label{font-size:10px;color:var(--text2);font-weight:700;text-align:center;}
-    .ef input{text-align:center;padding:8px 2px;border:1.5px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;background:#fff;-webkit-appearance:none;width:100%;}
-    .ef input:focus{outline:none;border-color:var(--red);}
-    .add-p-btn{width:100%;padding:12px;border:2px dashed var(--border);border-radius:10px;background:none;color:var(--text2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;-webkit-tap-highlight-color:transparent;}
-    .add-p-btn:active{border-color:var(--red);color:var(--red);}
-    .pri-btn{width:100%;padding:13px;background:var(--red);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-    .pri-btn:active{background:var(--red-d);}
-    .sec-btn{width:100%;padding:11px;background:none;border:1.5px solid var(--border);border-radius:10px;font-size:15px;cursor:pointer;color:var(--text);margin-bottom:8px;font-family:inherit;}
-    .sec-btn:active{background:var(--bg);}
+/* ── Form ── */
+.f-group{margin-bottom:14px}
+.f-label{font-size:12px;font-weight:700;color:var(--sub);margin-bottom:6px;display:block;letter-spacing:.3px}
+.f-input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:11px;font-size:16px;background:#fff;-webkit-appearance:none;appearance:none;color:var(--text)}
+.f-input:focus{outline:none;border-color:var(--green-light)}
+.f-row{display:grid;grid-template-columns:1fr 110px;gap:8px;margin-bottom:8px;align-items:center}
 
-    /* SHEET */
-    .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end;justify-content:center;}
-    .overlay.open{display:flex;}
-    .sheet{width:100%;max-width:540px;background:#fff;border-radius:20px 20px 0 0;padding:20px 16px 40px;max-height:70vh;overflow-y:auto;}
-    .sheet-t{font-size:16px;font-weight:700;margin-bottom:14px;text-align:center;}
-    .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
-    .chip{padding:7px 15px;background:var(--bg);border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:14px;-webkit-tap-highlight-color:transparent;font-family:inherit;}
-    .chip.on{background:var(--red);border-color:var(--red);color:#fff;}
-    .new-p-row{display:flex;gap:8px;margin-top:8px;}
-    .new-p-in{flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:15px;font-family:inherit;}
-    .new-p-in:focus{outline:none;border-color:var(--red);}
-    .new-p-add{padding:9px 14px;background:var(--red);color:#fff;border:none;border-radius:8px;font-size:15px;cursor:pointer;white-space:nowrap;}
-    .sheet-ok{width:100%;padding:12px;background:var(--red);color:#fff;border:none;border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;margin-top:14px;}
+/* ── Button ── */
+.btn{display:block;width:100%;padding:14px;background:var(--green-mid);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:.3px}
+.btn:active{opacity:.85}
+.btn-sm{display:inline-block;padding:10px 18px;width:auto;font-size:14px;border-radius:10px}
+.btn-ghost{background:transparent;color:var(--green-mid);border:1.5px solid var(--green-mid)}
+.btn-danger{background:var(--red-pale);color:var(--red)}
+.btn-gray{background:#f0f0f0;color:var(--sub)}
 
-    /* PLAYER TABS */
-    .ptabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-    .ptabs::-webkit-scrollbar{display:none;}
-    .ptab{flex-shrink:0;padding:6px 16px;border-radius:20px;border:1.5px solid var(--border);background:none;font-size:14px;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent;}
-    .ptab.on{background:var(--red);border-color:var(--red);color:#fff;}
+/* ── Player list ── */
+.p-item{display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid var(--border)}
+.p-item:last-child{border-bottom:none}
+.p-name{font-size:16px;font-weight:700}
+.p-sub{font-size:11px;color:var(--sub);margin-top:2px}
+.p-score-big{font-size:20px;font-weight:800}
 
-    /* SETTINGS */
-    .set-sec{margin-bottom:20px;}
-    .set-t{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding-bottom:6px;border-bottom:1px solid var(--border);margin-bottom:10px;}
-    .pm-row{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);}
-    .pm-nm{flex:1;font-size:15px;}
-    .danger-btn{background:var(--red-l);color:var(--red);border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;}
+/* ── Player detail modal ── */
+.modal-over{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:flex-end}
+.modal-over.open{display:flex}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:20px 16px;width:100%;max-height:85vh;overflow-y:auto;padding-bottom:calc(20px + var(--safe-bot))}
+.modal-title{font-size:18px;font-weight:800;text-align:center;margin-bottom:16px}
+.modal-close{position:absolute;top:14px;right:16px;font-size:24px;background:none;border:none;color:var(--sub);cursor:pointer}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat-box{background:var(--green-pale);border-radius:10px;padding:11px;text-align:center}
+.stat-v{font-size:20px;font-weight:800}
+.stat-l{font-size:10px;color:var(--sub);margin-top:3px}
 
-    /* MISC */
-    .empty{text-align:center;padding:48px 16px;color:var(--text2);}
-    .empty-ico{font-size:48px;margin-bottom:10px;}
-    .empty-t{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px;}
-    .sec-t{font-size:16px;font-weight:700;margin-bottom:10px;}
-    .sep{height:1px;background:var(--border);margin:6px 0;}
+/* ── Toast ── */
+.toast{position:fixed;bottom:calc(72px + var(--safe-bot) + 8px);left:50%;transform:translateX(-50%);background:rgba(20,50,20,.88);color:#fff;padding:10px 22px;border-radius:24px;font-size:14px;z-index:300;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1}
 
-    @media(prefers-color-scheme:dark){
-      :root{--bg:#111;--surface:#1C1C1E;--text:#F0F0F0;--text2:#888;--border:#2C2C2E;}
-      .fi,.ef input,.new-p-in{background:#2A2A2A;color:#F0F0F0;}
-      .pe{background:#252525;}.ms{background:#252525;}
-      .chip{background:#2A2A2A;}.sheet{background:#1C1C1E;}
-      .new-p-add,.sheet-ok,.pri-btn{background:var(--red);}
-    }
-  </style>
+/* ── Empty state ── */
+.empty{text-align:center;padding:36px 20px;color:var(--sub)}
+.empty-ico{font-size:44px;margin-bottom:10px}
+
+/* ── Segment ── */
+.seg{display:flex;background:#e8f0e8;border-radius:10px;padding:3px;margin-bottom:14px}
+.seg-btn{flex:1;padding:8px;border:none;background:transparent;border-radius:8px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer}
+.seg-btn.on{background:#fff;color:var(--green);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* ── Import/Export modal ── */
+.io-row{display:flex;gap:10px;margin-bottom:12px}
+</style>
 </head>
 <body>
-<div id="app">
-  <!-- TOP BAR -->
-  <div class="top">
-    <div class="top-title" id="top-title">🀄 麻雀成績帳</div>
-    <button class="top-btn" id="top-action" onclick="topAction()" style="display:none">＋</button>
+
+<header class="hdr">
+  <div>
+    <div class="hdr-title">🀄 麻雀スコア</div>
+    <div class="hdr-sub" id="hdrSub">成績管理アプリ</div>
   </div>
-
-  <!-- PAGES -->
-  <div class="main">
-    <!-- HOME -->
-    <div class="page on" id="page-home">
-      <div id="home-content"></div>
-    </div>
-
-    <!-- ADD -->
-    <div class="page" id="page-add">
-      <div id="add-content"></div>
-    </div>
-
-    <!-- HISTORY -->
-    <div class="page" id="page-history">
-      <div id="hist-content"></div>
-    </div>
-
-    <!-- STATS -->
-    <div class="page" id="page-stats">
-      <div id="stats-content"></div>
-    </div>
-
-    <!-- SETTINGS -->
-    <div class="page" id="page-settings">
-      <div id="set-content"></div>
-    </div>
+  <div class="hdr-actions">
+    <button class="hdr-btn" onclick="openIO()">📤 共有</button>
   </div>
+</header>
 
-  <!-- BOTTOM NAV -->
-  <div class="nav">
-    <button class="nv on" data-p="home" onclick="go('home')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-      ホーム
-    </button>
-    <button class="nv" data-p="add" onclick="go('add')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
-      記録
-    </button>
-    <button class="nv" data-p="history" onclick="go('history')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.95-2.05L6.64 18.36A8.965 8.965 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-      履歴
-    </button>
-    <button class="nv" data-p="stats" onclick="go('stats')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zM16.2 13h2.8v6h-2.8v-6z"/></svg>
-      統計
-    </button>
-    <button class="nv" data-p="settings" onclick="go('settings')">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
-      設定
-    </button>
-  </div>
+<!-- ── HOME ── -->
+<div id="pg-home" class="page active">
+  <div class="sec">総合ランキング</div>
+  <div class="card" id="rankList"><div class="empty"><div class="empty-ico">🀄</div><p>まだデータがありません</p></div></div>
 
-  <!-- PLAYER SELECT SHEET -->
-  <div class="overlay" id="player-sheet">
-    <div class="sheet">
-      <div class="sheet-t">プレイヤーを選択</div>
-      <div class="chips" id="sheet-chips"></div>
-      <div class="new-p-row">
-        <input class="new-p-in" id="new-p-in" placeholder="新しいプレイヤー名" maxlength="8">
-        <button class="new-p-add" onclick="addNewPlayer()">追加</button>
+  <div class="sec">最近の対局</div>
+  <div id="recentList"><div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div></div>
+</div>
+
+<!-- ── ADD ── -->
+<div id="pg-add" class="page">
+  <div class="card">
+    <div class="f-group">
+      <label class="f-label">対局日</label>
+      <input type="date" id="g-date" class="f-input">
+    </div>
+
+    <div class="f-group">
+      <label class="f-label">人数</label>
+      <div class="seg" id="playerCountSeg">
+        <button class="seg-btn" onclick="setPlayerCount(3,this)">三麻（3人）</button>
+        <button class="seg-btn on" onclick="setPlayerCount(4,this)">四麻（4人）</button>
       </div>
-      <button class="sheet-ok" onclick="confirmPlayers()">決定</button>
+    </div>
+
+    <label class="f-label">プレイヤー &amp; スコア</label>
+    <div id="scoreRows"></div>
+
+    <div class="f-group" style="margin-top:10px">
+      <label class="f-label">メモ（任意）</label>
+      <input type="text" id="g-memo" class="f-input" placeholder="例：〇〇荘にて、東風戦など">
+    </div>
+    <button class="btn" onclick="saveGame()">💾 記録する</button>
+  </div>
+</div>
+
+<!-- ── HISTORY ── -->
+<div id="pg-hist" class="page">
+  <div id="histList"><div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div></div>
+</div>
+
+<!-- ── MEMBERS ── -->
+<div id="pg-mem" class="page">
+  <div class="card">
+    <label class="f-label">新しいメンバーを追加</label>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="newName" class="f-input" placeholder="名前（例：たか）" style="flex:1">
+      <button class="btn btn-sm" onclick="addPlayer()" style="white-space:nowrap">追加</button>
+    </div>
+  </div>
+  <div class="card" id="memberList"><div class="empty"><div class="empty-ico">👤</div><p>メンバーが登録されていません</p></div></div>
+</div>
+
+<!-- ── Bottom Nav ── -->
+<nav class="nav">
+  <button class="nav-btn active" onclick="goPage('home',this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>ホーム
+  </button>
+  <button class="nav-btn" onclick="goPage('add',this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>記録
+  </button>
+  <button class="nav-btn" onclick="goPage('hist',this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>履歴
+  </button>
+  <button class="nav-btn" onclick="goPage('mem',this)">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>メンバー
+  </button>
+</nav>
+
+<!-- ── Player Detail Modal ── -->
+<div class="modal-over" id="pdModal" onclick="closePD(event)">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closePDBtn()">×</button>
+    <div class="modal-title" id="pdName"></div>
+    <div class="stats-grid" id="pdStats"></div>
+    <div class="sec" style="margin-top:0">スコア推移</div>
+    <canvas id="pdChart" height="100" style="width:100%;display:block;margin-bottom:14px"></canvas>
+    <div class="sec">対局履歴</div>
+    <div id="pdHist"></div>
+  </div>
+</div>
+
+<!-- ── IO Modal ── -->
+<div class="modal-over" id="ioModal" onclick="closeIO(event)">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeIOBtn()">×</button>
+    <div class="modal-title">データ共有</div>
+    <div class="io-row">
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="exportJSON()">📥 JSONエクスポート</button>
+      <button class="btn btn-ghost btn-sm" style="flex:1" onclick="document.getElementById('importFile').click()">📤 JSONインポート</button>
+    </div>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(this)">
+    <p style="font-size:12px;color:var(--sub);text-align:center;line-height:1.6">
+      エクスポートしたJSONファイルを友達に送り、<br>インポートで成績を共有できます。
+    </p>
+    <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:16px">
+      <button class="btn btn-danger" onclick="confirmReset()">🗑 全データをリセット</button>
     </div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script>
-// ===== DATA =====
-const KEY = 'mj_v3';
-const TODAY = new Date().toISOString().split('T')[0];
+// =========================================
+// Storage
+// =========================================
+const SK = { p:'mj_players', g:'mj_games' };
+const load = k => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } };
+const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
 
-function loadData() {
-  try {
-    const r = localStorage.getItem(KEY);
-    if (r) return JSON.parse(r);
-  } catch(e){}
-  return initData();
+let players = load(SK.p);
+let games   = load(SK.g);
+
+// =========================================
+// Navigation
+// =========================================
+function goPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('pg-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (name === 'home') renderHome();
+  if (name === 'add')  renderAddPage();
+  if (name === 'hist') renderHist();
+  if (name === 'mem')  renderMembers();
 }
 
-function initData() {
-  // Seed with parsed historical records
-  const players = ['はず','たか','まー','むつ','はるき','ひろ','ゆうせい','睦月'];
-  const raw = [
-    {id:'s1', date:'', results:[{p:'はず',t:-286},{p:'たか',t:215},{p:'まー',t:71}]},
-    {id:'s2', date:'', results:[{p:'はず',t:-218},{p:'まー',t:93},{p:'たか',t:125}]},
-    {id:'s3', date:'', results:[{p:'はず',t:83},{p:'まー',t:-193},{p:'たか',t:110}]},
-    {id:'s4a',date:'', results:[{p:'たか',t:141},{p:'はず',t:-44},{p:'むつ',t:-97}]},
-    {id:'s4b',date:'', results:[{p:'たか',t:186},{p:'はず',t:-25},{p:'むつ',t:-161}]},
-    {id:'s5', date:'', results:[{p:'はるき',t:-125},{p:'まー',t:-8},{p:'はず',t:-11},{p:'たか',t:144}]},
-    {id:'s6', date:'', results:[{p:'はず',t:-40},{p:'まー',t:-62},{p:'たか',t:102}]},
-    {id:'s7a',date:'', results:[{p:'はず',t:128},{p:'ひろ',t:-127},{p:'たか',t:-1}]},
-    {id:'s7b',date:'', results:[{p:'まー',t:-20},{p:'たか',t:0},{p:'ひろ',t:-55},{p:'はず',t:75}]},
-    {id:'s8', date:'', results:[{p:'まー',t:-125},{p:'はず',t:-99},{p:'たか',t:224}]},
-    {id:'s9a',date:'', results:[{p:'はず',t:62},{p:'まー',t:-71},{p:'はるき',t:-101},{p:'たか',t:110}]},
-    {id:'s9b',date:'', results:[{p:'たか',t:3},{p:'まー',t:41},{p:'むつ',t:48},{p:'はず',t:-92}]},
-    {id:'s10',date:'', results:[{p:'はず',t:-96},{p:'まー',t:54},{p:'むつ',t:96},{p:'たか',t:-54}]},
-    {id:'s11',date:'', results:[{p:'はず',t:9},{p:'まー',t:61},{p:'たか',t:-26},{p:'かえ',t:-44}]},
-    {id:'s12',date:'', results:[{p:'たか',t:354},{p:'はず',t:-534},{p:'まー',t:180}]},
-    {id:'s13',date:'', results:[{p:'たか',t:-108},{p:'はず',t:104},{p:'まー',t:40},{p:'はるき',t:-36}]},
-    {id:'s14',date:'', results:[{p:'はず',t:-88},{p:'たか',t:66},{p:'まー',t:22}]},
-    {id:'s15',date:'', results:[{p:'はず',t:-279},{p:'まー',t:137},{p:'たか',t:142}]},
-    {id:'s16',date:'', results:[{p:'はず',t:-56},{p:'むつ',t:99},{p:'まー',t:-155},{p:'たか',t:112}]},
-    {id:'s17',date:'', results:[{p:'はず',t:78},{p:'まー',t:-2},{p:'たか',t:-76}]},
-    {id:'s18',date:'', results:[{p:'まー',t:-91},{p:'はず',t:-134},{p:'たか',t:225}]},
-    {id:'s19',date:'', results:[{p:'はず',t:-44},{p:'まー',t:141},{p:'たか',t:185}]},
-    {id:'s20',date:'', results:[{p:'はず',t:-56},{p:'まー',t:-7},{p:'たか',t:63}]},
-    {id:'s21',date:'', results:[{p:'はず',t:-339},{p:'まー',t:-96},{p:'たか',t:437}]},
-    {id:'s22',date:'', results:[{p:'はず',t:-247},{p:'まー',t:174},{p:'たか',t:73}]},
-    {id:'s23',date:'', results:[{p:'睦月',t:-78},{p:'たか',t:72},{p:'はず',t:6}]},
-    {id:'s24',date:'', results:[{p:'ゆうせい',t:-41},{p:'はず',t:-226},{p:'たか',t:267}]},
-  ];
-  const sessions = raw.map(s => ({
-    id: s.id,
-    date: s.date,
-    memo: '（既存データ）',
-    results: s.results.map(r => ({
-      player: r.p, total: r.t, tsumo: 0, ron: 0, furikon: 0
-    }))
-  }));
-  return { players, sessions };
+// =========================================
+// Toast
+// =========================================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-let D = loadData();
-function save() { localStorage.setItem(KEY, JSON.stringify(D)); }
-
-// ===== NAVIGATION =====
-let page = 'home';
-let statsPlayer = null;
-let addPlayers = [];
-let editingId = null;
-
-function go(p) {
-  document.querySelectorAll('.page').forEach(x => x.classList.remove('on'));
-  document.querySelectorAll('.nv').forEach(x => x.classList.remove('on'));
-  document.getElementById('page-' + p).classList.add('on');
-  document.querySelector('[data-p="' + p + '"]').classList.add('on');
-  page = p;
-  const ta = document.getElementById('top-action');
-  const tt = document.getElementById('top-title');
-  const titles = {home:'🀄 麻雀成績帳',add:'新しい記録',history:'対局履歴',stats:'個人統計',settings:'設定'};
-  tt.textContent = titles[p] || '麻雀成績帳';
-  ta.style.display = p === 'add' ? 'none' : 'none';
-  render(p);
-}
-
-function topAction() {}
-function render(p) {
-  ({home:renderHome, add:renderAdd, history:renderHist, stats:renderStats, settings:renderSettings})[p]?.();
-}
-
-// ===== STATS CALC =====
-function stats(name) {
-  let tot=0,ts=0,ro=0,fu=0,cnt=0;
-  D.sessions.forEach(s => {
-    const r = s.results.find(x => x.player === name);
-    if (r) { tot += +r.total||0; ts += +r.tsumo||0; ro += +r.ron||0; fu += +r.furikon||0; cnt++; }
-  });
-  const win = ts + ro;
-  return {
-    tot, ts, ro, fu, cnt,
-    avg: cnt ? Math.round(tot/cnt) : 0,
-    tsR: win ? Math.round(ts/win*100) : 0,
-    roR: win ? Math.round(ro/win*100) : 0,
-    fuR: (win+fu) ? Math.round(fu/(win+fu)*100) : 0,
-    win
-  };
-}
-
+// =========================================
+// Stats
+// =========================================
 function allStats() {
-  return D.players.map(n => ({name:n, ...stats(n)})).sort((a,b) => b.tot - a.tot);
+  const m = {};
+  players.forEach(p => { m[p.id] = { id:p.id, name:p.name, total:0, games:0, wins:0, r1:0,r2:0,r3:0,r4:0, hist:[] }; });
+  games.forEach(g => {
+    g.players.forEach(gp => {
+      if (!m[gp.id]) return;
+      m[gp.id].total += gp.score;
+      m[gp.id].games++;
+      m[gp.id].hist.push({ date:g.date, score:gp.score, rank:gp.rank });
+      if (gp.rank===1) { m[gp.id].wins++; m[gp.id].r1++; }
+      if (gp.rank===2) m[gp.id].r2++;
+      if (gp.rank===3) m[gp.id].r3++;
+      if (gp.rank===4) m[gp.id].r4++;
+    });
+  });
+  return Object.values(m).filter(s=>s.games>0).sort((a,b)=>b.total-a.total);
 }
 
-// ===== UTILS =====
-function fmtDate(d) {
-  if (!d) return '日付不明';
-  const [y,m,dd] = d.split('-');
-  return `${y}/${m}/${dd}`;
-}
-function sc(v) {
-  const n = +v||0;
-  return `<span class="${n>=0?'pos':'neg'}">${n>=0?'+':''}${n}</span>`;
-}
-function uid() { return 's' + Date.now() + Math.random().toString(36).slice(2,6); }
-
-// ===== HOME =====
+// =========================================
+// HOME
+// =========================================
 function renderHome() {
-  const ct = document.getElementById('home-content');
-  const as = allStats();
-  const hasSessions = D.sessions.some(s => s.results.some(r => +r.tsumo||+r.ron||+r.furikon));
+  const stats = allStats();
+  document.getElementById('hdrSub').textContent =
+    `${players.length}人 / ${games.length}戦記録中`;
 
-  const board = as.map((p,i) => `
-    <div class="li" onclick="goStats('${p.name}')">
-      <div class="li-rank ${i<3?'r'+(i+1):''}">${i+1}</div>
-      <div style="flex:1">
-        <div class="li-name">${p.name}</div>
-        <div class="li-sub">${p.cnt}戦 ${hasSessions ? `• ツモ${p.ts} ロン${p.ro} ふり${p.fu}` : '• ツモ/ロン/ふりこみは新規記録から'}</div>
-      </div>
-      <div style="text-align:right">
-        <div class="li-score ${p.tot>=0?'pos':'neg'}">${p.tot>=0?'+':''}${p.tot}</div>
-        <div style="font-size:11px;color:var(--text2)">平均 ${p.avg>=0?'+':''}${p.avg}</div>
-      </div>
-    </div>`).join('');
+  // Ranking
+  const rl = document.getElementById('rankList');
+  if (!stats.length) {
+    rl.innerHTML = '<div class="empty"><div class="empty-ico">🀄</div><p>まだデータがありません<br><small style="font-size:11px">メンバーを追加して対局を記録してください</small></p></div>';
+  } else {
+    rl.innerHTML = stats.map((s,i) => {
+      const bc = ['rb1','rb2','rb3','rb-'][Math.min(i,3)];
+      const sc = s.total>0?'pos':s.total<0?'neg':'zer';
+      const sign = s.total>0?'+':'';
+      const wr = s.games>0?Math.round(s.wins/s.games*100):0;
+      const avg = s.games>0?Math.round(s.total/s.games):0;
+      const avgSign = avg>=0?'+':'';
+      // sparkline data
+      const sparkData = s.hist.slice(-12).map(h=>h.score);
+      const sparkHTML = sparkline(sparkData);
+      return `<div class="rank-row" onclick="openPD('${s.id}')">
+        <div class="rank-badge ${bc}">${i+1}</div>
+        <div class="rank-info">
+          <div class="rank-name">${esc(s.name)}</div>
+          <div class="rank-detail">${s.games}戦 ｜ 1位率${wr}% ｜ 平均${avgSign}${avg.toLocaleString()}</div>
+          <div class="spark">${sparkHTML}</div>
+        </div>
+        <div class="rank-score ${sc}">${sign}${s.total.toLocaleString()}</div>
+      </div>`;
+    }).join('');
+  }
 
-  const recent = [...D.sessions].reverse().slice(0,5).map(s => {
-    const winner = [...s.results].sort((a,b) => b.total - a.total)[0];
-    return `<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;gap:8px;">
-      <span style="color:var(--text2);width:72px;flex-shrink:0">${fmtDate(s.date)}</span>
-      <span style="flex:1">${s.results.map(r=>r.player).join(' ・ ')}</span>
-      <span style="font-weight:700;color:var(--green)">${winner.player} 勝</span>
+  // Recent
+  const sorted = [...games].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  const rl2 = document.getElementById('recentList');
+  rl2.innerHTML = sorted.length ? sorted.map(g=>gameCard(g,false)).join('') :
+    '<div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div>';
+}
+
+function sparkline(data) {
+  if (!data.length) return '';
+  const max = Math.max(...data.map(Math.abs), 1);
+  return data.map(v => {
+    const h = Math.max(3, Math.round(Math.abs(v)/max*34));
+    const c = v>0?'#43a047':v<0?'#e53935':'#90a4ae';
+    return `<div class="spark-bar" style="height:${h}px;background:${c}"></div>`;
+  }).join('');
+}
+
+// =========================================
+// GAME CARD
+// =========================================
+function gameCard(g, showDel=true) {
+  const sorted = [...g.players].sort((a,b)=>b.score-a.score);
+  const bc = ['br1','br2','br3','br4'];
+  const cols = sorted.length <= 3 ? `repeat(${sorted.length},1fr)` : '1fr 1fr';
+  const delBtn = showDel ? `<button class="g-del" onclick="event.stopPropagation();delGame('${g.id}')">✕</button>` : '';
+  return `<div class="g-card">
+    <div class="g-head" onclick="this.parentElement.querySelector('.g-players').style.display==='none'?this.parentElement.querySelector('.g-players').style.display='grid':this.parentElement.querySelector('.g-players').style.display='none'">
+      <span class="g-date">📅 ${fmtDate(g.date)}</span>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${g.memo?`<span class="g-memo">${esc(g.memo)}</span>`:''}
+        ${delBtn}
+      </div>
+    </div>
+    <div class="g-players" style="grid-template-columns:${cols}">
+      ${sorted.map((p,i)=>{
+        const sc = p.score>0?'pos':p.score<0?'neg':'zer';
+        const sign = p.score>0?'+':'';
+        return `<div class="g-player">
+          <div>
+            <span class="g-pname">${esc(p.name)}</span>
+            <span class="g-rank-badge ${bc[i]}">${i+1}位</span>
+          </div>
+          <div class="g-pscore ${sc}">${sign}${p.score}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+// =========================================
+// ADD PAGE
+// =========================================
+let pCount = 4;
+function setPlayerCount(n, el) {
+  pCount = n;
+  document.querySelectorAll('#playerCountSeg .seg-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderScoreRows();
+}
+
+function renderAddPage() {
+  if (!document.getElementById('g-date').value)
+    document.getElementById('g-date').value = todayStr();
+  renderScoreRows();
+}
+
+function renderScoreRows() {
+  const opts = players.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
+  let html = '';
+  if (!players.length) {
+    html = '<div style="text-align:center;color:var(--sub);padding:16px;font-size:14px">先にメンバーを登録してください</div>';
+  } else {
+    for (let i=0;i<pCount;i++) {
+      html += `<div class="f-row">
+        <select class="f-input" id="pp-${i}">
+          <option value="">プレイヤー選択</option>${opts}
+        </select>
+        <input type="number" class="f-input" id="ps-${i}" placeholder="スコア" inputmode="numeric" style="text-align:center">
+      </div>`;
+    }
+  }
+  document.getElementById('scoreRows').innerHTML = html;
+}
+
+function saveGame() {
+  const date = document.getElementById('g-date').value;
+  if (!date) { toast('対局日を選択してください'); return; }
+  const memo = document.getElementById('g-memo').value.trim();
+  const gps = [];
+  const usedIds = new Set();
+
+  for (let i=0;i<pCount;i++) {
+    const pid = document.getElementById(`pp-${i}`)?.value;
+    const sv  = document.getElementById(`ps-${i}`)?.value;
+    if (!pid && !sv) continue;
+    if (!pid) { toast(`${i+1}人目のプレイヤーを選択してください`); return; }
+    if (sv===''||sv===undefined) { toast(`${i+1}人目のスコアを入力してください`); return; }
+    if (usedIds.has(pid)) { toast('同じプレイヤーが重複しています'); return; }
+    usedIds.add(pid);
+    const pl = players.find(p=>p.id===pid);
+    gps.push({ id:pid, name:pl.name, score:parseInt(sv,10) });
+  }
+  if (gps.length < 2) { toast('最低2人分のスコアを入力してください'); return; }
+
+  // Assign ranks (descending score = rank 1)
+  [...gps].sort((a,b)=>b.score-a.score).forEach((p,i)=>{ p.rank=i+1; });
+
+  games.push({ id: Date.now().toString(), date, memo, players: gps, createdAt: new Date().toISOString() });
+  save(SK.g, games);
+  toast('✅ 対局を記録しました！');
+  document.getElementById('g-memo').value = '';
+  renderScoreRows();
+  setTimeout(()=>{ const btn=document.querySelector('.nav-btn'); goPage('home',btn); }, 700);
+}
+
+// =========================================
+// HISTORY
+// =========================================
+function renderHist() {
+  const sorted = [...games].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('histList').innerHTML = sorted.length
+    ? sorted.map(g=>gameCard(g,true)).join('')
+    : '<div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div>';
+}
+
+function delGame(id) {
+  if (!confirm('この対局を削除しますか？')) return;
+  games = games.filter(g=>g.id!==id);
+  save(SK.g, games);
+  renderHist();
+  toast('削除しました');
+}
+
+// =========================================
+// MEMBERS
+// =========================================
+function addPlayer() {
+  const n = document.getElementById('newName').value.trim();
+  if (!n) { toast('名前を入力してください'); return; }
+  if (players.find(p=>p.name===n)) { toast('同じ名前のメンバーがいます'); return; }
+  players.push({ id: Date.now().toString(), name:n, createdAt: new Date().toISOString() });
+  save(SK.p, players);
+  document.getElementById('newName').value = '';
+  renderMembers();
+  toast(`${n} を追加しました`);
+}
+
+function renderMembers() {
+  const el = document.getElementById('memberList');
+  if (!players.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ico">👤</div><p>メンバーが登録されていません</p></div>';
+    return;
+  }
+  const sm = {};
+  allStats().forEach(s=>sm[s.id]=s);
+  el.innerHTML = players.map(p => {
+    const s = sm[p.id];
+    const total = s ? (s.total>=0?'+':'')+s.total.toLocaleString() : '---';
+    const sc = s&&s.total>0?'pos':s&&s.total<0?'neg':'zer';
+    return `<div class="p-item" onclick="openPD('${p.id}')">
+      <div>
+        <div class="p-name">${esc(p.name)}</div>
+        <div class="p-sub">${s?s.games+'戦':'未記録'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="p-score-big ${sc}">${total}</div>
+        <button class="btn btn-danger btn-sm" style="padding:6px 10px;font-size:12px" onclick="event.stopPropagation();delPlayer('${p.id}')">削除</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function delPlayer(id) {
+  const pl = players.find(p=>p.id===id);
+  if (!confirm(`${pl.name} を削除しますか？\n（対局記録は残ります）`)) return;
+  players = players.filter(p=>p.id!==id);
+  save(SK.p, players);
+  renderMembers();
+  toast('削除しました');
+}
+
+// =========================================
+// PLAYER DETAIL MODAL
+// =========================================
+function openPD(pid) {
+  const s = allStats().find(x=>x.id===pid);
+  if (!s) { toast('成績データがありません'); return; }
+  document.getElementById('pdName').textContent = s.name;
+
+  const wr = s.games>0?Math.round(s.wins/s.games*100):0;
+  const avg = s.games>0?Math.round(s.total/s.games):0;
+  const avgSign = avg>=0?'+':'';
+  const rankAvg = s.games>0
+    ? ((s.r1*1+s.r2*2+s.r3*3+s.r4*4)/s.games).toFixed(1) : '-';
+
+  document.getElementById('pdStats').innerHTML = [
+    [s.games+'戦','出場数'],
+    [(s.total>=0?'+':'')+s.total.toLocaleString(),'累計'],
+    [wr+'%','1位率'],
+    [avgSign+avg.toLocaleString(),'平均'],
+    [rankAvg,'平均順位'],
+    [s.r1+'回','1位回数'],
+  ].map(([v,l])=>`<div class="stat-box"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`).join('');
+
+  // Chart
+  drawChart(s.hist);
+
+  // History
+  const hist = [...s.hist].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  document.getElementById('pdHist').innerHTML = hist.map(h=>{
+    const sc = h.score>0?'pos':h.score<0?'neg':'zer';
+    const sign = h.score>0?'+':'';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;color:var(--sub)">${fmtDate(h.date)}</div>
+        <div style="font-size:11px;color:var(--sub)">${h.rank}位</div>
+      </div>
+      <div class="rank-score ${sc}" style="font-size:18px">${sign}${h.score.toLocaleString()}</div>
     </div>`;
   }).join('');
 
-  ct.innerHTML = `
-    <div class="card">
-      <div class="card-t">通算順位</div>
-      ${as.length ? board : '<div class="empty"><div class="empty-t">データなし</div></div>'}
-    </div>
-    <div class="card">
-      <div class="card-t">最近の対局</div>
-      ${recent || '<p style="color:var(--text2);font-size:13px">まだ記録がありません</p>'}
-    </div>
-  `;
+  document.getElementById('pdModal').classList.add('open');
 }
 
-function goStats(name) {
-  statsPlayer = name;
-  go('stats');
-}
+function drawChart(hist) {
+  const cvs = document.getElementById('pdChart');
+  const ctx = cvs.getContext('2d');
+  cvs.width = cvs.offsetWidth * devicePixelRatio;
+  cvs.height = 100 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = cvs.offsetWidth, H = 100;
+  ctx.clearRect(0,0,W,H);
 
-// ===== ADD =====
-function renderAdd() {
-  const ct = document.getElementById('add-content');
-  addPlayers = [];
-  ct.innerHTML = `
-    <div class="card">
-      <div class="fg">
-        <label class="fl">対局日</label>
-        <input class="fi" type="date" id="f-date" value="${TODAY}">
-      </div>
-      <div class="fg">
-        <label class="fl">メモ（任意）</label>
-        <input class="fi" type="text" id="f-memo" placeholder="例：渋谷例会" maxlength="30">
-      </div>
-    </div>
+  if (!hist.length) return;
+  const sorted = [...hist].sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const cums = [];
+  let run = 0;
+  sorted.forEach(h=>{ run+=h.score; cums.push(run); });
 
-    <div id="player-entries"></div>
-
-    <button class="add-p-btn" onclick="openSheet()">
-      <span style="font-size:22px">＋</span> プレイヤーを追加
-    </button>
-
-    <div style="height:16px"></div>
-    <button class="pri-btn" onclick="saveSession()">💾 保存する</button>
-  `;
-}
-
-function openSheet() {
-  const chips = document.getElementById('sheet-chips');
-  chips.innerHTML = D.players.map(p => `
-    <button class="chip ${addPlayers.includes(p)?'on':''}" onclick="toggleChip(this,'${p}')">${p}</button>
-  `).join('');
-  document.getElementById('player-sheet').classList.add('open');
-  document.getElementById('new-p-in').value = '';
-}
-
-function toggleChip(el, name) {
-  if (addPlayers.includes(name)) {
-    addPlayers = addPlayers.filter(x => x !== name);
-    el.classList.remove('on');
-  } else {
-    addPlayers.push(name);
-    el.classList.add('on');
-  }
-}
-
-function addNewPlayer() {
-  const v = document.getElementById('new-p-in').value.trim();
-  if (!v) return;
-  if (!D.players.includes(v)) { D.players.push(v); save(); }
-  if (!addPlayers.includes(v)) {
-    addPlayers.push(v);
-    const chips = document.getElementById('sheet-chips');
-    const btn = document.createElement('button');
-    btn.className = 'chip on';
-    btn.textContent = v;
-    btn.onclick = function(){ toggleChip(this, v); };
-    chips.appendChild(btn);
-  }
-  document.getElementById('new-p-in').value = '';
-}
-
-function confirmPlayers() {
-  document.getElementById('player-sheet').classList.remove('open');
-  const ct = document.getElementById('player-entries');
-  ct.innerHTML = addPlayers.map(p => `
-    <div class="pe" id="pe-${p}">
-      <div class="pe-hd">
-        <div class="pe-nm">${p}</div>
-        <button class="pe-rm" onclick="removeEntry('${p}')">×</button>
-      </div>
-      <div class="eg">
-        <div class="ef">
-          <label>合計点</label>
-          <input type="number" id="t-${p}" placeholder="0" inputmode="numeric">
-        </div>
-        <div class="ef">
-          <label>🀄 ツモ</label>
-          <input type="number" id="ts-${p}" placeholder="0" min="0" inputmode="numeric" value="0">
-        </div>
-        <div class="ef">
-          <label>🎯 ロン</label>
-          <input type="number" id="ro-${p}" placeholder="0" min="0" inputmode="numeric" value="0">
-        </div>
-        <div class="ef">
-          <label>💸 ふり</label>
-          <input type="number" id="fu-${p}" placeholder="0" min="0" inputmode="numeric" value="0">
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function removeEntry(p) {
-  addPlayers = addPlayers.filter(x => x !== p);
-  document.getElementById('pe-' + p)?.remove();
-}
-
-function saveSession() {
-  if (addPlayers.length === 0) { alert('プレイヤーを追加してください'); return; }
-  const date = document.getElementById('f-date').value;
-  const memo = document.getElementById('f-memo').value.trim();
-  const results = addPlayers.map(p => ({
-    player: p,
-    total: parseInt(document.getElementById('t-'+p)?.value)||0,
-    tsumo: parseInt(document.getElementById('ts-'+p)?.value)||0,
-    ron:   parseInt(document.getElementById('ro-'+p)?.value)||0,
-    furikon: parseInt(document.getElementById('fu-'+p)?.value)||0,
+  const maxV = Math.max(Math.abs(Math.max(...cums)), Math.abs(Math.min(...cums)), 1);
+  const pad = 10;
+  const pts = cums.map((v,i)=>({
+    x: pad + (i/(cums.length-1||1))*(W-pad*2),
+    y: (H/2) - (v/maxV)*(H/2-pad)
   }));
-  D.sessions.push({ id: uid(), date, memo, results });
-  save();
-  alert('保存しました！');
-  go('home');
-}
 
-// ===== HISTORY =====
-function renderHist() {
-  const ct = document.getElementById('hist-content');
-  if (!D.sessions.length) {
-    ct.innerHTML = `<div class="empty"><div class="empty-ico">📋</div><div class="empty-t">記録がありません</div></div>`;
-    return;
-  }
-  const sess = [...D.sessions].reverse();
-  ct.innerHTML = sess.map(s => {
-    const rows = s.results.map(r => `
-      <div class="si-row">
-        <span class="si-nm">${r.player}</span>
-        <span class="si-sc ${(+r.total||0)>=0?'pos':'neg'}">${(+r.total||0)>=0?'+':''}${r.total||0}</span>
-        <span class="si-dt">ツモ${r.tsumo||0} ロン${r.ron||0} ふり${r.furikon||0}</span>
-      </div>`).join('');
-    const memo = s.memo ? `<span style="font-size:11px;color:var(--text2);margin-left:8px">${s.memo}</span>` : '';
-    return `
-      <div class="si">
-        <div class="si-hd" onclick="toggleSess('${s.id}')">
-          <div>
-            <div class="si-date">${fmtDate(s.date)}${memo}</div>
-          </div>
-          <span class="si-meta">${s.results.length}人</span>
-          <span class="si-ch" id="ch-${s.id}">›</span>
-        </div>
-        <div class="si-bd" id="bd-${s.id}">
-          ${rows}
-          <button class="del-btn" onclick="delSession('${s.id}')">🗑 この記録を削除</button>
-        </div>
-      </div>`;
-  }).join('');
-}
+  // Zero line
+  ctx.strokeStyle = '#ddd';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([4,3]);
+  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+  ctx.setLineDash([]);
 
-function toggleSess(id) {
-  document.getElementById('bd-'+id)?.classList.toggle('open');
-  const ch = document.getElementById('ch-'+id);
-  if (ch) ch.classList.toggle('open');
-}
+  // Area fill
+  const lastY = pts[pts.length-1].y;
+  const final = cums[cums.length-1];
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  if (final>=0) { grad.addColorStop(0,'rgba(67,160,71,.3)'); grad.addColorStop(1,'rgba(67,160,71,.0)'); }
+  else { grad.addColorStop(0,'rgba(229,57,53,.0)'); grad.addColorStop(1,'rgba(229,57,53,.3)'); }
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, H/2);
+  pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x, H/2);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
 
-function delSession(id) {
-  if (!confirm('この記録を削除しますか？')) return;
-  D.sessions = D.sessions.filter(s => s.id !== id);
-  save();
-  renderHist();
-}
+  // Line
+  ctx.strokeStyle = final>=0?'#43a047':'#e53935';
+  ctx.lineWidth = 2.5;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));
+  ctx.stroke();
 
-// ===== STATS =====
-function renderStats() {
-  const ct = document.getElementById('stats-content');
-  if (!D.players.length) {
-    ct.innerHTML = `<div class="empty"><div class="empty-ico">📊</div><div class="empty-t">プレイヤーがいません</div></div>`;
-    return;
-  }
-  if (!statsPlayer || !D.players.includes(statsPlayer)) statsPlayer = D.players[0];
-
-  const tabs = D.players.map(p =>
-    `<button class="ptab ${p===statsPlayer?'on':''}" onclick="selSP('${p}')">${p}</button>`
-  ).join('');
-
-  const s = stats(statsPlayer);
-  const sC = s.tot>=0?'var(--green)':'var(--red)';
-  const sSign = s.tot>=0?'+':'';
-
-  const recent = [...D.sessions]
-    .filter(x => x.results.some(r => r.player===statsPlayer))
-    .sort((a,b) => (b.date||'').localeCompare(a.date||''))
-    .slice(0,10)
-    .map(x => {
-      const r = x.results.find(r => r.player===statsPlayer);
-      const t = +r.total||0;
-      return `<div style="display:flex;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;gap:8px">
-        <span style="color:var(--text2);width:72px;flex-shrink:0">${fmtDate(x.date)}</span>
-        <span class="${t>=0?'pos':'neg'}" style="width:60px;text-align:right;font-weight:800;font-variant-numeric:tabular-nums;flex-shrink:0">${t>=0?'+':''}${t}</span>
-        <span style="color:var(--text2);flex:1;text-align:right">ツモ${r.tsumo||0} ロン${r.ron||0} ふり${r.furikon||0}</span>
-      </div>`;
-    }).join('');
-
-  const hasWinData = s.win > 0;
-  const hasFuData = s.fu > 0 || s.win > 0;
-
-  ct.innerHTML = `
-    <div class="ptabs">${tabs}</div>
-
-    <div class="card" style="margin-top:10px">
-      <div style="text-align:center;padding:4px 0 12px">
-        <div style="font-size:12px;color:var(--text2);margin-bottom:2px">通算スコア</div>
-        <div style="font-size:38px;font-weight:900;color:${sC};font-variant-numeric:tabular-nums">${sSign}${s.tot}</div>
-        <div style="font-size:13px;color:var(--text2);margin-top:2px">${s.cnt}戦 ・ 平均 ${s.avg>=0?'+':''}${s.avg}</div>
-      </div>
-      <div class="msg">
-        <div class="ms"><div class="ms-v" style="color:var(--blue)">${s.ts}</div><div class="ms-l">ツモ回数</div></div>
-        <div class="ms"><div class="ms-v" style="color:var(--amber)">${s.ro}</div><div class="ms-l">ロン回数</div></div>
-        <div class="ms"><div class="ms-v" style="color:var(--red)">${s.fu}</div><div class="ms-l">ふりこみ</div></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-t">和了の内訳 & ふりこみ率</div>
-
-      ${hasWinData ? `
-      <div class="bar-row">
-        <div class="bar-hd"><span style="color:var(--blue)">🀄 ツモ和了</span><span style="font-weight:700">${s.ts}回（${s.tsR}%）</span></div>
-        <div class="bar-bg"><div class="bar-fill bt" style="width:${s.tsR}%"></div></div>
-      </div>
-      <div class="bar-row">
-        <div class="bar-hd"><span style="color:var(--amber)">🎯 ロン和了</span><span style="font-weight:700">${s.ro}回（${s.roR}%）</span></div>
-        <div class="bar-bg"><div class="bar-fill ba" style="width:${s.roR}%"></div></div>
-      </div>
-      ` : '<p style="font-size:13px;color:var(--text2);margin-bottom:10px">ツモ・ロンのデータはまだありません</p>'}
-
-      ${hasFuData ? `
-      <div class="bar-row" style="margin-bottom:0">
-        <div class="bar-hd"><span style="color:var(--red)">💸 ふりこみ率</span><span style="font-weight:700">${s.fu}回（${s.fuR}%）</span></div>
-        <div class="bar-bg"><div class="bar-fill br" style="width:${s.fuR}%"></div></div>
-      </div>
-      <p style="font-size:11px;color:var(--text2);margin-top:6px">※ ふりこみ率 = ふりこみ ÷（和了 + ふりこみ）× 100</p>
-      ` : ''}
-    </div>
-
-    ${recent ? `
-    <div class="card">
-      <div class="card-t">最近の成績（最新10件）</div>
-      ${recent}
-    </div>` : ''}
-  `;
-}
-
-function selSP(name) { statsPlayer = name; renderStats(); }
-
-// ===== SETTINGS =====
-function renderSettings() {
-  const ct = document.getElementById('set-content');
-  const plist = D.players.map(p => `
-    <div class="pm-row">
-      <span class="pm-nm">${p}</span>
-      <button class="danger-btn" onclick="delPlayer('${p}')">削除</button>
-    </div>`).join('');
-
-  ct.innerHTML = `
-    <div class="card">
-      <div class="set-t">プレイヤー管理</div>
-      ${plist}
-      <div class="new-p-row" style="margin-top:12px">
-        <input class="new-p-in" id="set-new-p" placeholder="プレイヤー名を追加" maxlength="8">
-        <button class="new-p-add" onclick="settingAddPlayer()">追加</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="set-t">データ管理</div>
-      <button class="sec-btn" onclick="exportCSV()">📥 CSVで書き出す</button>
-      <button class="sec-btn" style="border-color:#fca5a5;color:var(--red)" onclick="resetAll()">⚠️ 全データをリセット</button>
-    </div>
-
-    <div class="card" style="font-size:12px;color:var(--text2);line-height:1.8">
-      <div class="set-t">使い方</div>
-      <p>🎯 「記録」タブから対局結果を入力</p>
-      <p>📊 「統計」タブで個人の成績・ツモ率・ふりこみ率を確認</p>
-      <p>📋 「履歴」タブで過去の対局を管理</p>
-      <p style="margin-top:8px;color:var(--text2)">💡 既存の記録はスコアのみです。今後の記録からツモ・ロン・ふりこみを入力できます。</p>
-    </div>
-  `;
-}
-
-function settingAddPlayer() {
-  const v = document.getElementById('set-new-p').value.trim();
-  if (!v) return;
-  if (!D.players.includes(v)) { D.players.push(v); save(); renderSettings(); }
-}
-
-function delPlayer(name) {
-  if (!confirm(`「${name}」を削除しますか？\n※ 対局履歴のデータは残ります`)) return;
-  D.players = D.players.filter(p => p !== name);
-  save();
-  renderSettings();
-}
-
-function exportCSV() {
-  const rows = [['日付','メモ','プレイヤー','合計点','ツモ','ロン','ふりこみ']];
-  D.sessions.forEach(s => {
-    s.results.forEach(r => {
-      rows.push([s.date||'',s.memo||'',r.player,r.total||0,r.tsumo||0,r.ron||0,r.furikon||0]);
-    });
+  // Dots
+  pts.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x,p.y,3,0,Math.PI*2);
+    ctx.fillStyle = final>=0?'#43a047':'#e53935'; ctx.fill();
   });
-  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+}
+
+function closePD(e) { if (e.target===document.getElementById('pdModal')) closePDBtn(); }
+function closePDBtn() { document.getElementById('pdModal').classList.remove('open'); }
+
+// =========================================
+// IMPORT / EXPORT
+// =========================================
+function openIO() { document.getElementById('ioModal').classList.add('open'); }
+function closeIO(e) { if (e.target===document.getElementById('ioModal')) closeIOBtn(); }
+function closeIOBtn() { document.getElementById('ioModal').classList.remove('open'); }
+
+function exportJSON() {
+  const data = { players, games, exportedAt: new Date().toISOString(), version: 1 };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = '麻雀成績.csv'; a.click();
+  a.href = url;
+  a.download = `mahjong_${todayStr()}.json`;
+  a.click();
   URL.revokeObjectURL(url);
+  toast('エクスポートしました');
 }
 
-function resetAll() {
-  if (!confirm('全てのデータを削除しますか？\nこの操作は元に戻せません')) return;
-  if (!confirm('本当に全データを削除しますか？')) return;
-  localStorage.removeItem(KEY);
-  D = initData();
-  save();
-  go('home');
+function importJSON(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.players || !data.games) throw new Error('形式が不正です');
+      if (!confirm(`インポートしますか？\nプレイヤー: ${data.players.length}人\n対局: ${data.games.length}戦\n※現在のデータに追加されます`)) return;
+      // Merge (avoid duplicates by id)
+      const pIds = new Set(players.map(p=>p.id));
+      const gIds = new Set(games.map(g=>g.id));
+      data.players.forEach(p=>{ if (!pIds.has(p.id)) players.push(p); });
+      data.games.forEach(g=>{ if (!gIds.has(g.id)) games.push(g); });
+      save(SK.p, players); save(SK.g, games);
+      toast('インポートしました！');
+      closeIOBtn();
+      renderHome();
+    } catch(err) { toast('インポートに失敗しました: ' + err.message); }
+  };
+  reader.readAsText(file);
+  input.value = '';
 }
 
-// Close sheet when clicking overlay
-document.getElementById('player-sheet').addEventListener('click', function(e) {
-  if (e.target === this) this.classList.remove('open');
-});
+function confirmReset() {
+  if (!confirm('全データを削除します。元に戻せません。\n本当によいですか？')) return;
+  players = []; games = [];
+  save(SK.p, players); save(SK.g, games);
+  toast('リセットしました');
+  closeIOBtn();
+  renderHome();
+}
 
+// =========================================
+// Utilities
+// =========================================
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function fmtDate(d) {
+  const dt = new Date(d + 'T00:00:00');
+  return `${dt.getFullYear()}年${dt.getMonth()+1}月${dt.getDate()}日`;
+}
+
+// =========================================
 // Init
+// =========================================
 renderHome();
 </script>
 </body>
