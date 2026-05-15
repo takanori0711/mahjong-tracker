@@ -620,13 +620,16 @@ function openPD(pid) {
   const avgSign = avg>=0?'+':'';
   const rankAvg = s.games>0
     ? ((s.r1*1+s.r2*2+s.r3*3+s.r4*4)/s.games).toFixed(1) : '-';
-  const kyoku   = s.kyoku || 0;
-  const ronPct  = kyoku > 0 ? (s.ron    / kyoku * 100).toFixed(1) : '---';
-  const tsumoPct= kyoku > 0 ? (s.tsumo  / kyoku * 100).toFixed(1) : '---';
-  const furiPct = kyoku > 0 ? (s.furikon/ kyoku * 100).toFixed(1) : '---';
-  const ronPctN  = kyoku > 0 ? s.ron    / kyoku * 100 : 0;
-  const tsumoPctN= kyoku > 0 ? s.tsumo  / kyoku * 100 : 0;
-  const furiPctN = kyoku > 0 ? s.furikon/ kyoku * 100 : 0;
+  const kyoku    = s.kyoku || 0;
+  const agari    = s.ron + s.tsumo;
+  const agariPct = kyoku > 0 ? (agari        / kyoku * 100).toFixed(1) : '---';
+  const ronPct   = kyoku > 0 ? (s.ron        / kyoku * 100).toFixed(1) : '---';
+  const tsumoPct = kyoku > 0 ? (s.tsumo      / kyoku * 100).toFixed(1) : '---';
+  const furiPct  = kyoku > 0 ? (s.furikon    / kyoku * 100).toFixed(1) : '---';
+  const agariPctN = kyoku > 0 ? agari        / kyoku * 100 : 0;
+  const ronPctN   = kyoku > 0 ? s.ron        / kyoku * 100 : 0;
+  const tsumoPctN = kyoku > 0 ? s.tsumo      / kyoku * 100 : 0;
+  const furiPctN  = kyoku > 0 ? s.furikon    / kyoku * 100 : 0;
 
   document.getElementById('pdStats').innerHTML = [
     [s.games+'戦','出場数'],
@@ -652,16 +655,30 @@ function openPD(pid) {
           <div style="font-size:11px;color:var(--sub);margin-bottom:10px">
             ${kyoku > 0 ? `総局数: <b>${kyoku}</b>局` : '※局数未入力のため割合は概算'}
           </div>
-          <div class="stat-bar-wrap" style="margin-bottom:10px">
-            <div class="stat-bar-label"><span>🀄 ロン率（出アガリ率）</span><span style="font-weight:700">${ronPct}%</span></div>
-            <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${Math.min(ronPctN,100)}%"></div></div>
+          <div class="stat-bar-wrap" style="margin-bottom:6px">
+            <div class="stat-bar-label">
+              <span>🏆 和了率</span>
+              <span style="font-weight:700">${agariPct}%</span>
+            </div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${Math.min(agariPctN,100)}%"></div></div>
+            <div style="font-size:10px;color:var(--sub);margin-top:4px;padding-left:2px">
+              内訳 ／ ロン ${ronPct}%
+              <span style="display:inline-block;width:1px;height:9px;background:var(--border);margin:0 4px;vertical-align:middle"></span>
+              ツモ ${tsumoPct}%
+            </div>
           </div>
-          <div class="stat-bar-wrap" style="margin-bottom:10px">
-            <div class="stat-bar-label"><span>🌀 ツモ率（自摸アガリ率）</span><span style="font-weight:700">${tsumoPct}%</span></div>
-            <div class="stat-bar-bg"><div class="stat-bar-fill bar-blue" style="width:${Math.min(tsumoPctN,100)}%"></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0">
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-label"><span>　🀄 ロン</span><span style="font-weight:700">${ronPct}%</span></div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${Math.min(ronPctN,100)}%;opacity:.7"></div></div>
+            </div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-label"><span>　🌀 ツモ</span><span style="font-weight:700">${tsumoPct}%</span></div>
+              <div class="stat-bar-bg"><div class="stat-bar-fill bar-blue" style="width:${Math.min(tsumoPctN,100)}%;opacity:.7"></div></div>
+            </div>
           </div>
           <div class="stat-bar-wrap">
-            <div class="stat-bar-label"><span>💸 ふりこみ率（放銃率）</span><span style="font-weight:700;color:var(--red)">${furiPct}%</span></div>
+            <div class="stat-bar-label"><span>💸 放銃率</span><span style="font-weight:700;color:var(--red)">${furiPct}%</span></div>
             <div class="stat-bar-bg"><div class="stat-bar-fill bar-red" style="width:${Math.min(furiPctN,100)}%"></div></div>
           </div>`
       }
