@@ -250,7 +250,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Helvetica Neu
     <button class="modal-close" onclick="closePDBtn()">×</button>
     <div class="modal-title" id="pdName"></div>
     <div class="stats-grid" id="pdStats"></div>
-    <div class="sec" style="margin-top:0">スコア推移</div>
+    <div id="pdRonStats"></div>
+    <div class="sec" style="margin-top:14px">スコア推移</div>
     <canvas id="pdChart" height="100" style="width:100%;display:block;margin-bottom:14px"></canvas>
     <div class="sec">対局履歴</div>
     <div id="pdHist"></div>
@@ -623,30 +624,36 @@ function openPD(pid) {
     [s.r1+'回','1位回数'],
   ].map(([v,l])=>`<div class="stat-box"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`).join('');
 
-  // 和了・ふりこみ詳細
-  document.getElementById('pdStats').insertAdjacentHTML('afterend', `
+  // 和了・ふりこみ詳細（専用コンテナに上書き → 重複しない）
+  const hasRonData = s.ron > 0 || s.tsumo > 0 || s.furikon > 0;
+  document.getElementById('pdRonStats').innerHTML = `
     <div class="sec" style="margin-top:14px">和了 / ふりこみ</div>
     <div class="card" style="padding:14px">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:14px">
-        <div><div style="font-size:22px;font-weight:800;color:var(--green-mid)">${s.ron}</div><div style="font-size:11px;color:var(--sub)">ロン</div></div>
-        <div><div style="font-size:22px;font-weight:800;color:#1976d2">${s.tsumo}</div><div style="font-size:11px;color:var(--sub)">ツモ</div></div>
-        <div><div style="font-size:22px;font-weight:800;color:var(--red)">${s.furikon}</div><div style="font-size:11px;color:var(--sub)">ふりこみ</div></div>
-      </div>
-      ${kyoku > 0 ? `<div style="font-size:11px;color:var(--sub);margin-bottom:10px">総局数: <b>${kyoku}</b>局</div>` : '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">※局数未入力のため割合は計算できません</div>'}
-      <div class="stat-bar-wrap" style="margin-bottom:10px">
-        <div class="stat-bar-label"><span>🀄 ロン率（出アガリ率）</span><span style="font-weight:700">${ronPct}%</span></div>
-        <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${Math.min(ronPctN,100)}%"></div></div>
-      </div>
-      <div class="stat-bar-wrap" style="margin-bottom:10px">
-        <div class="stat-bar-label"><span>🌀 ツモ率（自摸アガリ率）</span><span style="font-weight:700">${tsumoPct}%</span></div>
-        <div class="stat-bar-bg"><div class="stat-bar-fill bar-blue" style="width:${Math.min(tsumoPctN,100)}%"></div></div>
-      </div>
-      <div class="stat-bar-wrap">
-        <div class="stat-bar-label"><span>💸 ふりこみ率（放銃率）</span><span style="font-weight:700;color:var(--red)">${furiPct}%</span></div>
-        <div class="stat-bar-bg"><div class="stat-bar-fill bar-red" style="width:${Math.min(furiPctN,100)}%"></div></div>
-      </div>
+      ${!hasRonData
+        ? '<div style="text-align:center;color:var(--sub);font-size:13px;padding:8px 0">ロン・ツモ・ふりこみの記録はまだありません。<br>対局記録時に入力してください。</div>'
+        : `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:14px">
+            <div><div style="font-size:22px;font-weight:800;color:var(--green-mid)">${s.ron}</div><div style="font-size:11px;color:var(--sub)">ロン</div></div>
+            <div><div style="font-size:22px;font-weight:800;color:#1976d2">${s.tsumo}</div><div style="font-size:11px;color:var(--sub)">ツモ</div></div>
+            <div><div style="font-size:22px;font-weight:800;color:var(--red)">${s.furikon}</div><div style="font-size:11px;color:var(--sub)">ふりこみ</div></div>
+          </div>
+          <div style="font-size:11px;color:var(--sub);margin-bottom:10px">
+            ${kyoku > 0 ? `総局数: <b>${kyoku}</b>局` : '※局数未入力のため割合は概算'}
+          </div>
+          <div class="stat-bar-wrap" style="margin-bottom:10px">
+            <div class="stat-bar-label"><span>🀄 ロン率（出アガリ率）</span><span style="font-weight:700">${ronPct}%</span></div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${Math.min(ronPctN,100)}%"></div></div>
+          </div>
+          <div class="stat-bar-wrap" style="margin-bottom:10px">
+            <div class="stat-bar-label"><span>🌀 ツモ率（自摸アガリ率）</span><span style="font-weight:700">${tsumoPct}%</span></div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill bar-blue" style="width:${Math.min(tsumoPctN,100)}%"></div></div>
+          </div>
+          <div class="stat-bar-wrap">
+            <div class="stat-bar-label"><span>💸 ふりこみ率（放銃率）</span><span style="font-weight:700;color:var(--red)">${furiPct}%</span></div>
+            <div class="stat-bar-bg"><div class="stat-bar-fill bar-red" style="width:${Math.min(furiPctN,100)}%"></div></div>
+          </div>`
+      }
     </div>
-  `);
+  `;
 
   // Chart
   drawChart(s.hist);
