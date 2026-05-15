@@ -200,7 +200,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Helvetica Neu
       </div>
     </div>
 
-    <label class="f-label">プレイヤー &amp; スコア / ロン / ツモ / ふりこみ</label>
+    <label class="f-label">プレイヤー &amp; スコア / ロン / ツモ / 放銃</label>
     <div id="scoreRows"></div>
 
     <div class="f-group" style="margin-top:10px">
@@ -472,7 +472,7 @@ function renderScoreRows() {
             </div>
           </div>
           <div class="count-item">
-            <div class="count-label">💸 ふりこみ</div>
+            <div class="count-label">💸 放銃</div>
             <div class="stepper">
               <button class="step-btn step-r" onclick="stepCount('furik-${i}',-1)">−</button>
               <div class="step-val" id="furik-${i}">0</div>
@@ -643,14 +643,14 @@ function openPD(pid) {
   // 和了・ふりこみ詳細（専用コンテナに上書き → 重複しない）
   const hasRonData = s.ron > 0 || s.tsumo > 0 || s.furikon > 0;
   document.getElementById('pdRonStats').innerHTML = `
-    <div class="sec" style="margin-top:14px">和了 / ふりこみ</div>
+    <div class="sec" style="margin-top:14px">和了 / 放銃</div>
     <div class="card" style="padding:14px">
       ${!hasRonData
-        ? '<div style="text-align:center;color:var(--sub);font-size:13px;padding:8px 0">ロン・ツモ・ふりこみの記録はまだありません。<br>対局記録時に入力してください。</div>'
+        ? '<div style="text-align:center;color:var(--sub);font-size:13px;padding:8px 0">ロン・ツモ・放銃の記録はまだありません。<br>対局記録時に入力してください。</div>'
         : `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:14px">
             <div><div style="font-size:22px;font-weight:800;color:var(--green-mid)">${s.ron}</div><div style="font-size:11px;color:var(--sub)">ロン</div></div>
             <div><div style="font-size:22px;font-weight:800;color:#1976d2">${s.tsumo}</div><div style="font-size:11px;color:var(--sub)">ツモ</div></div>
-            <div><div style="font-size:22px;font-weight:800;color:var(--red)">${s.furikon}</div><div style="font-size:11px;color:var(--sub)">ふりこみ</div></div>
+            <div><div style="font-size:22px;font-weight:800;color:var(--red)">${s.furikon}</div><div style="font-size:11px;color:var(--sub)">放銃</div></div>
           </div>
           <div style="font-size:11px;color:var(--sub);margin-bottom:10px">
             ${kyoku > 0 ? `総局数: <b>${kyoku}</b>局` : '※局数未入力のため割合は概算'}
