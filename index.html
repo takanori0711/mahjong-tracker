@@ -190,7 +190,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Helvetica Neu
       </div>
     </div>
 
-    <label class="f-label">プレイヤー &amp; スコア</label>
+    <div class="f-group">
+      <label class="f-label">総局数（この対局で何局打ったか）</label>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="step-btn step-g" style="width:36px;height:36px;font-size:20px" onclick="stepCount('g-kyoku',-1)">−</button>
+        <span id="g-kyoku" style="font-size:24px;font-weight:800;width:40px;text-align:center">8</span>
+        <button class="step-btn step-g" style="width:36px;height:36px;font-size:20px" onclick="stepCount('g-kyoku',1)">＋</button>
+        <span style="font-size:12px;color:var(--sub)">局</span>
+      </div>
+    </div>
+
+    <label class="f-label">プレイヤー &amp; スコア / ロン / ツモ / ふりこみ</label>
     <div id="scoreRows"></div>
 
     <div class="f-group" style="margin-top:10px">
@@ -308,12 +318,13 @@ function toast(msg) {
 // =========================================
 function allStats() {
   const m = {};
-  players.forEach(p => { m[p.id] = { id:p.id, name:p.name, total:0, games:0, wins:0, r1:0,r2:0,r3:0,r4:0, ron:0, tsumo:0, furikon:0, hist:[] }; });
+  players.forEach(p => { m[p.id] = { id:p.id, name:p.name, total:0, games:0, wins:0, r1:0,r2:0,r3:0,r4:0, ron:0, tsumo:0, furikon:0, kyoku:0, hist:[] }; });
   games.forEach(g => {
     g.players.forEach(gp => {
       if (!m[gp.id]) return;
       m[gp.id].total += gp.score;
       m[gp.id].games++;
+      m[gp.id].kyoku   += g.kyoku||0;
       m[gp.id].ron     += gp.ron||0;
       m[gp.id].tsumo   += gp.tsumo||0;
       m[gp.id].furikon += gp.furikon||0;
@@ -480,9 +491,10 @@ function stepCount(id, delta) {
 }
 
 function saveGame() {
-  const date = document.getElementById('g-date').value;
+  const date  = document.getElementById('g-date').value;
   if (!date) { toast('対局日を選択してください'); return; }
-  const memo = document.getElementById('g-memo').value.trim();
+  const kyoku = parseInt(document.getElementById('g-kyoku').textContent)||0;
+  const memo  = document.getElementById('g-memo').value.trim();
   const gps = [];
   const usedIds = new Set();
 
@@ -507,7 +519,7 @@ function saveGame() {
   // Assign ranks (descending score = rank 1)
   [...gps].sort((a,b)=>b.score-a.score).forEach((p,i)=>{ p.rank=i+1; });
 
-  games.push({ id: Date.now().toString(), date, memo, players: gps, createdAt: new Date().toISOString() });
+  games.push({ id: Date.now().toString(), date, memo, kyoku, players: gps, createdAt: new Date().toISOString() });
   save(SK.g, games);
   toast('✅ 対局を記録しました！');
   document.getElementById('g-memo').value = '';
@@ -594,11 +606,13 @@ function openPD(pid) {
   const avgSign = avg>=0?'+':'';
   const rankAvg = s.games>0
     ? ((s.r1*1+s.r2*2+s.r3*3+s.r4*4)/s.games).toFixed(1) : '-';
-  const agari   = s.ron + s.tsumo;
-  const agariPct= agari+s.furikon > 0 ? Math.round(agari/(agari+s.furikon+s.games)*100) : 0;
-  const ronPct  = agari > 0 ? Math.round(s.ron/agari*100)   : 0;
-  const tsumoPct= agari > 0 ? Math.round(s.tsumo/agari*100) : 0;
-  const furiPct = agari+s.furikon > 0 ? Math.round(s.furikon/(agari+s.furikon+s.games)*100) : 0;
+  const kyoku   = s.kyoku || 0;
+  const ronPct  = kyoku > 0 ? (s.ron    / kyoku * 100).toFixed(1) : '---';
+  const tsumoPct= kyoku > 0 ? (s.tsumo  / kyoku * 100).toFixed(1) : '---';
+  const furiPct = kyoku > 0 ? (s.furikon/ kyoku * 100).toFixed(1) : '---';
+  const ronPctN  = kyoku > 0 ? s.ron    / kyoku * 100 : 0;
+  const tsumoPctN= kyoku > 0 ? s.tsumo  / kyoku * 100 : 0;
+  const furiPctN = kyoku > 0 ? s.furikon/ kyoku * 100 : 0;
 
   document.getElementById('pdStats').innerHTML = [
     [s.games+'戦','出場数'],
@@ -618,17 +632,18 @@ function openPD(pid) {
         <div><div style="font-size:22px;font-weight:800;color:#1976d2">${s.tsumo}</div><div style="font-size:11px;color:var(--sub)">ツモ</div></div>
         <div><div style="font-size:22px;font-weight:800;color:var(--red)">${s.furikon}</div><div style="font-size:11px;color:var(--sub)">ふりこみ</div></div>
       </div>
+      ${kyoku > 0 ? `<div style="font-size:11px;color:var(--sub);margin-bottom:10px">総局数: <b>${kyoku}</b>局</div>` : '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">※局数未入力のため割合は計算できません</div>'}
       <div class="stat-bar-wrap" style="margin-bottom:10px">
-        <div class="stat-bar-label"><span>🀄 ロン率</span><span style="font-weight:700">${ronPct}%</span></div>
-        <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${ronPct}%"></div></div>
+        <div class="stat-bar-label"><span>🀄 ロン率（出アガリ率）</span><span style="font-weight:700">${ronPct}%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${Math.min(ronPctN,100)}%"></div></div>
       </div>
       <div class="stat-bar-wrap" style="margin-bottom:10px">
-        <div class="stat-bar-label"><span>🌀 ツモ率</span><span style="font-weight:700">${tsumoPct}%</span></div>
-        <div class="stat-bar-bg"><div class="stat-bar-fill bar-blue" style="width:${tsumoPct}%"></div></div>
+        <div class="stat-bar-label"><span>🌀 ツモ率（自摸アガリ率）</span><span style="font-weight:700">${tsumoPct}%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill bar-blue" style="width:${Math.min(tsumoPctN,100)}%"></div></div>
       </div>
       <div class="stat-bar-wrap">
-        <div class="stat-bar-label"><span>💸 ふりこみ率</span><span style="font-weight:700;color:var(--red)">${furiPct}%</span></div>
-        <div class="stat-bar-bg"><div class="stat-bar-fill bar-red" style="width:${furiPct}%"></div></div>
+        <div class="stat-bar-label"><span>💸 ふりこみ率（放銃率）</span><span style="font-weight:700;color:var(--red)">${furiPct}%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill bar-red" style="width:${Math.min(furiPctN,100)}%"></div></div>
       </div>
     </div>
   `);
