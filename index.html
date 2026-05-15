@@ -131,6 +131,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Helvetica Neu
 
 /* ── Import/Export modal ── */
 .io-row{display:flex;gap:10px;margin-bottom:12px}
+
+/* ── Stepper (ロン/ツモ/ふりこみ) ── */
+.player-entry{background:var(--green-bg);border-radius:12px;padding:12px;margin-bottom:8px}
+.counts-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px}
+.count-item{display:flex;flex-direction:column;align-items:center;gap:5px}
+.count-label{font-size:10px;font-weight:700;color:var(--sub);letter-spacing:.3px}
+.stepper{display:flex;align-items:center;gap:4px}
+.step-btn{width:26px;height:26px;border-radius:50%;border:none;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:700;line-height:1}
+.step-g{background:var(--green-pale);color:var(--green-mid)}
+.step-r{background:var(--red-pale);color:var(--red)}
+.step-val{width:28px;text-align:center;font-size:15px;font-weight:800;color:var(--text)}
+
+/* ── Stats bar (和了率など) ── */
+.stat-bar-wrap{margin-top:4px}
+.stat-bar-label{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px}
+.stat-bar-bg{background:#e8f0e8;border-radius:4px;height:7px;overflow:hidden}
+.stat-bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.bar-green{background:var(--green-light)}
+.bar-red{background:var(--red)}
+.bar-blue{background:#1976d2}
 </style>
 </head>
 <body>
@@ -288,13 +308,16 @@ function toast(msg) {
 // =========================================
 function allStats() {
   const m = {};
-  players.forEach(p => { m[p.id] = { id:p.id, name:p.name, total:0, games:0, wins:0, r1:0,r2:0,r3:0,r4:0, hist:[] }; });
+  players.forEach(p => { m[p.id] = { id:p.id, name:p.name, total:0, games:0, wins:0, r1:0,r2:0,r3:0,r4:0, ron:0, tsumo:0, furikon:0, hist:[] }; });
   games.forEach(g => {
     g.players.forEach(gp => {
       if (!m[gp.id]) return;
       m[gp.id].total += gp.score;
       m[gp.id].games++;
-      m[gp.id].hist.push({ date:g.date, score:gp.score, rank:gp.rank });
+      m[gp.id].ron     += gp.ron||0;
+      m[gp.id].tsumo   += gp.tsumo||0;
+      m[gp.id].furikon += gp.furikon||0;
+      m[gp.id].hist.push({ date:g.date, score:gp.score, rank:gp.rank, ron:gp.ron||0, tsumo:gp.tsumo||0, furikon:gp.furikon||0 });
       if (gp.rank===1) { m[gp.id].wins++; m[gp.id].r1++; }
       if (gp.rank===2) m[gp.id].r2++;
       if (gp.rank===3) m[gp.id].r3++;
@@ -412,15 +435,48 @@ function renderScoreRows() {
     html = '<div style="text-align:center;color:var(--sub);padding:16px;font-size:14px">先にメンバーを登録してください</div>';
   } else {
     for (let i=0;i<pCount;i++) {
-      html += `<div class="f-row">
-        <select class="f-input" id="pp-${i}">
-          <option value="">プレイヤー選択</option>${opts}
-        </select>
-        <input type="number" class="f-input" id="ps-${i}" placeholder="スコア" inputmode="numeric" style="text-align:center">
+      html += `<div class="player-entry">
+        <div class="f-row" style="margin-bottom:0">
+          <select class="f-input" id="pp-${i}">
+            <option value="">プレイヤー選択</option>${opts}
+          </select>
+          <input type="number" class="f-input" id="ps-${i}" placeholder="スコア" inputmode="numeric" style="text-align:center">
+        </div>
+        <div class="counts-row">
+          <div class="count-item">
+            <div class="count-label">🀄 ロン</div>
+            <div class="stepper">
+              <button class="step-btn step-g" onclick="stepCount('ron-${i}',-1)">−</button>
+              <div class="step-val" id="ron-${i}">0</div>
+              <button class="step-btn step-g" onclick="stepCount('ron-${i}',1)">＋</button>
+            </div>
+          </div>
+          <div class="count-item">
+            <div class="count-label">🌀 ツモ</div>
+            <div class="stepper">
+              <button class="step-btn step-g" onclick="stepCount('tsumo-${i}',-1)">−</button>
+              <div class="step-val" id="tsumo-${i}">0</div>
+              <button class="step-btn step-g" onclick="stepCount('tsumo-${i}',1)">＋</button>
+            </div>
+          </div>
+          <div class="count-item">
+            <div class="count-label">💸 ふりこみ</div>
+            <div class="stepper">
+              <button class="step-btn step-r" onclick="stepCount('furik-${i}',-1)">−</button>
+              <div class="step-val" id="furik-${i}">0</div>
+              <button class="step-btn step-r" onclick="stepCount('furik-${i}',1)">＋</button>
+            </div>
+          </div>
+        </div>
       </div>`;
     }
   }
   document.getElementById('scoreRows').innerHTML = html;
+}
+
+function stepCount(id, delta) {
+  const el = document.getElementById(id);
+  el.textContent = Math.max(0, parseInt(el.textContent||'0') + delta);
 }
 
 function saveGame() {
@@ -439,7 +495,12 @@ function saveGame() {
     if (usedIds.has(pid)) { toast('同じプレイヤーが重複しています'); return; }
     usedIds.add(pid);
     const pl = players.find(p=>p.id===pid);
-    gps.push({ id:pid, name:pl.name, score:parseInt(sv,10) });
+    gps.push({
+      id:pid, name:pl.name, score:parseInt(sv,10),
+      ron:   parseInt(document.getElementById(`ron-${i}`)?.textContent||'0'),
+      tsumo: parseInt(document.getElementById(`tsumo-${i}`)?.textContent||'0'),
+      furikon: parseInt(document.getElementById(`furik-${i}`)?.textContent||'0')
+    });
   }
   if (gps.length < 2) { toast('最低2人分のスコアを入力してください'); return; }
 
@@ -528,20 +589,49 @@ function openPD(pid) {
   if (!s) { toast('成績データがありません'); return; }
   document.getElementById('pdName').textContent = s.name;
 
-  const wr = s.games>0?Math.round(s.wins/s.games*100):0;
-  const avg = s.games>0?Math.round(s.total/s.games):0;
+  const wr    = s.games>0 ? Math.round(s.wins/s.games*100) : 0;
+  const avg   = s.games>0 ? Math.round(s.total/s.games) : 0;
   const avgSign = avg>=0?'+':'';
   const rankAvg = s.games>0
     ? ((s.r1*1+s.r2*2+s.r3*3+s.r4*4)/s.games).toFixed(1) : '-';
+  const agari   = s.ron + s.tsumo;
+  const agariPct= agari+s.furikon > 0 ? Math.round(agari/(agari+s.furikon+s.games)*100) : 0;
+  const ronPct  = agari > 0 ? Math.round(s.ron/agari*100)   : 0;
+  const tsumoPct= agari > 0 ? Math.round(s.tsumo/agari*100) : 0;
+  const furiPct = agari+s.furikon > 0 ? Math.round(s.furikon/(agari+s.furikon+s.games)*100) : 0;
 
   document.getElementById('pdStats').innerHTML = [
     [s.games+'戦','出場数'],
     [(s.total>=0?'+':'')+s.total.toLocaleString(),'累計'],
     [wr+'%','1位率'],
-    [avgSign+avg.toLocaleString(),'平均'],
+    [avgSign+avg.toLocaleString(),'平均pt'],
     [rankAvg,'平均順位'],
     [s.r1+'回','1位回数'],
   ].map(([v,l])=>`<div class="stat-box"><div class="stat-v">${v}</div><div class="stat-l">${l}</div></div>`).join('');
+
+  // 和了・ふりこみ詳細
+  document.getElementById('pdStats').insertAdjacentHTML('afterend', `
+    <div class="sec" style="margin-top:14px">和了 / ふりこみ</div>
+    <div class="card" style="padding:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;margin-bottom:14px">
+        <div><div style="font-size:22px;font-weight:800;color:var(--green-mid)">${s.ron}</div><div style="font-size:11px;color:var(--sub)">ロン</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:#1976d2">${s.tsumo}</div><div style="font-size:11px;color:var(--sub)">ツモ</div></div>
+        <div><div style="font-size:22px;font-weight:800;color:var(--red)">${s.furikon}</div><div style="font-size:11px;color:var(--sub)">ふりこみ</div></div>
+      </div>
+      <div class="stat-bar-wrap" style="margin-bottom:10px">
+        <div class="stat-bar-label"><span>🀄 ロン率</span><span style="font-weight:700">${ronPct}%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill bar-green" style="width:${ronPct}%"></div></div>
+      </div>
+      <div class="stat-bar-wrap" style="margin-bottom:10px">
+        <div class="stat-bar-label"><span>🌀 ツモ率</span><span style="font-weight:700">${tsumoPct}%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill bar-blue" style="width:${tsumoPct}%"></div></div>
+      </div>
+      <div class="stat-bar-wrap">
+        <div class="stat-bar-label"><span>💸 ふりこみ率</span><span style="font-weight:700;color:var(--red)">${furiPct}%</span></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill bar-red" style="width:${furiPct}%"></div></div>
+      </div>
+    </div>
+  `);
 
   // Chart
   drawChart(s.hist);
