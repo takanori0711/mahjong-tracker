@@ -216,6 +216,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Hiragino Sans','Helvetica Neu
 
 <!-- ── HISTORY ── -->
 <div id="pg-hist" class="page">
+  <div class="seg" id="histSeg" style="margin-bottom:10px">
+    <button class="seg-btn on" onclick="switchHist('list',this)">対局一覧</button>
+    <button class="seg-btn" onclick="switchHist('day',this)">対局日別</button>
+    <button class="seg-btn" onclick="switchHist('month',this)">月別集計</button>
+  </div>
   <div id="histList"><div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div></div>
 </div>
 
@@ -562,11 +567,138 @@ function saveGame() {
 // =========================================
 // HISTORY
 // =========================================
+let histMode = 'list';
+
+function switchHist(mode, btn) {
+  histMode = mode;
+  document.querySelectorAll('#histSeg .seg-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderHist();
+}
+
 function renderHist() {
+  if (histMode === 'day')   { renderHistDay();   return; }
+  if (histMode === 'month') { renderHistMonth(); return; }
   const sorted = [...games].sort((a,b)=>new Date(b.date)-new Date(a.date));
   document.getElementById('histList').innerHTML = sorted.length
     ? sorted.map(g=>gameCard(g,true)).join('')
     : '<div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div>';
+}
+
+function renderHistDay() {
+  const sorted = [...games].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if (!sorted.length) {
+    document.getElementById('histList').innerHTML =
+      '<div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div>';
+    return;
+  }
+  // 日付でグループ化
+  const byDate = {};
+  sorted.forEach(g => {
+    if (!byDate[g.date]) byDate[g.date] = [];
+    byDate[g.date].push(g);
+  });
+  const dates = Object.keys(byDate).sort((a,b)=>new Date(b)-new Date(a));
+  let html = '';
+  dates.forEach(date => {
+    const gs = byDate[date];
+    // その日の全プレイヤー集計
+    const pm = {};
+    gs.forEach(g => {
+      g.players.forEach(p => {
+        if (!pm[p.id]) pm[p.id] = { name:p.name, score:0, games:0, wins:0 };
+        pm[p.id].score += p.score;
+        pm[p.id].games++;
+        if (p.rank===1) pm[p.id].wins++;
+      });
+    });
+    const dayPlayers = Object.values(pm).sort((a,b)=>b.score-a.score);
+    html += `<div class="g-card" style="margin-bottom:14px">
+      <div class="g-head" style="cursor:default">
+        <span class="g-date">📅 ${fmtDate(date)}</span>
+        <span style="font-size:11px;color:var(--sub)">${gs.length}対局</span>
+      </div>
+      <div style="background:var(--card);padding:10px 14px 6px">
+        <div style="display:grid;grid-template-columns:repeat(${Math.min(dayPlayers.length,3)},1fr);gap:6px;margin-bottom:10px">
+          ${dayPlayers.map((p,i)=>{
+            const sc = p.score>0?'pos':p.score<0?'neg':'zer';
+            const sign = p.score>0?'+':'';
+            const bc = ['rb1','rb2','rb3','rb-'][Math.min(i,3)];
+            return `<div style="text-align:center;background:var(--green-pale);border-radius:10px;padding:8px 4px">
+              <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:4px">
+                <div class="rank-badge ${bc}" style="width:22px;height:22px;font-size:10px">${i+1}</div>
+                <div style="font-size:13px;font-weight:700">${esc(p.name)}</div>
+              </div>
+              <div class="rank-score ${sc}" style="font-size:18px">${sign}${p.score.toLocaleString()}</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:2px">${p.games}戦 / ${p.wins}勝</div>
+            </div>`;
+          }).join('')}
+        </div>
+        ${gs.map(g=>gameCard(g,true)).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('histList').innerHTML = html;
+}
+
+function renderHistMonth() {
+  if (!games.length) {
+    document.getElementById('histList').innerHTML =
+      '<div class="empty"><div class="empty-ico">📋</div><p>対局履歴がありません</p></div>';
+    return;
+  }
+  // 月でグループ化
+  const byMonth = {};
+  games.forEach(g => {
+    const ym = g.date.slice(0,7); // "2024-01"
+    if (!byMonth[ym]) byMonth[ym] = [];
+    byMonth[ym].push(g);
+  });
+  const months = Object.keys(byMonth).sort((a,b)=>b.localeCompare(a));
+  let html = '';
+  months.forEach(ym => {
+    const gs = byMonth[ym];
+    const [y, m] = ym.split('-');
+    const label = `${y}年${parseInt(m)}月`;
+    // プレイヤー別集計
+    const pm = {};
+    gs.forEach(g => {
+      g.players.forEach(p => {
+        if (!pm[p.id]) pm[p.id] = { name:p.name, score:0, games:0, wins:0, r1:0,r2:0,r3:0,r4:0 };
+        pm[p.id].score += p.score;
+        pm[p.id].games++;
+        if (p.rank===1) { pm[p.id].wins++; pm[p.id].r1++; }
+        if (p.rank===2) pm[p.id].r2++;
+        if (p.rank===3) pm[p.id].r3++;
+        if (p.rank===4) pm[p.id].r4++;
+      });
+    });
+    const ranked = Object.values(pm).sort((a,b)=>b.score-a.score);
+    const bc = ['rb1','rb2','rb3','rb-'];
+    html += `<div class="card" style="margin-bottom:14px;padding:0;overflow:hidden">
+      <div style="background:var(--green-mid);padding:10px 16px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:15px;font-weight:800;color:#fff">📆 ${label}</span>
+        <span style="font-size:12px;color:rgba(255,255,255,.8)">${gs.length}対局</span>
+      </div>
+      <div style="padding:12px 14px">
+        ${ranked.map((p,i)=>{
+          const sc = p.score>0?'pos':p.score<0?'neg':'zer';
+          const sign = p.score>0?'+':'';
+          const wr = p.games>0?Math.round(p.wins/p.games*100):0;
+          const rankAvg = p.games>0?((p.r1*1+p.r2*2+p.r3*3+(p.r4||0)*4)/p.games).toFixed(1):'-';
+          return `<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)${i===ranked.length-1?';border-bottom:none':''}">
+            <div class="rank-badge ${bc[Math.min(i,3)]}" style="flex-shrink:0;margin-right:10px">${i+1}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:15px;font-weight:700">${esc(p.name)}</div>
+              <div style="font-size:10px;color:var(--sub);margin-top:2px">${p.games}戦 / 1位率${wr}% / 平均順位${rankAvg}</div>
+            </div>
+            <div class="rank-score ${sc}" style="font-size:20px">${sign}${p.score.toLocaleString()}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+  document.getElementById('histList').innerHTML = html;
 }
 
 function delGame(id) {
